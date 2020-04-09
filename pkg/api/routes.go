@@ -42,7 +42,7 @@ const (
 	BlobUploadUUID       = "Blob-Upload-UUID"
 	DefaultMediaType     = "application/json"
 	BinaryMediaType      = "application/octet-stream"
-	DbPath               = "../data/db/ZotSearch.db"
+	DbPath               = "../../data/db/ZotSearch.db"
 )
 
 type RouteHandler struct {
