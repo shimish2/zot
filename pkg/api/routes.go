@@ -125,7 +125,8 @@ func (rh *RouteHandler) SetupRoutes() {
 			} else {
 				db = utils.Conn(DbPath)
 			}
-			g.HandleFunc("/query", gqlHandler.GraphQL(search.NewExecutableSchema(search.Config{Resolvers: &search.Resolver{Db: db}})))
+			rh.c.Log.Info().Msg("Inside GrpahQl")
+			g.HandleFunc("/query", gqlHandler.GraphQL(search.NewExecutableSchema(search.Config{Resolvers: &search.Resolver{Db: db, Log: rh.c.Log}}))).Methods("GET")
 		}
 
 	}
