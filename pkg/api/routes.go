@@ -127,7 +127,11 @@ func (rh *RouteHandler) SetupRoutes() {
 				db = utils.Conn(DbPath)
 			}
 			rh.c.Log.Info().Msg("Inside GrpahQl")
+<<<<<<< HEAD
 			g.HandleFunc("/query", gqlHandler.GraphQL(search.NewExecutableSchema(search.Config{Resolvers: &search.Resolver{Db: db, Log: rh.c.Log}})))
+=======
+			g.HandleFunc("/query", gqlHandler.GraphQL(search.NewExecutableSchema(search.Config{Resolvers: &search.Resolver{Db: db, Log: rh.c.Log}}))).Methods("GET")
+>>>>>>> c4eb1e52e0141b85b5a38d0c2fa92878f987d379
 		}
 
 	}
