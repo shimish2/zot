@@ -9,8 +9,22 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+const (
+	// NvdDb ...
+	NvdDb = "NvdJSON"
+	// VendorDb ...
+	VendorDb = "NvdPkgVendor"
+	// NameDb ...
+	NameDb = "NvdPkgName"
+	// NameverDb ...
+	NameverDb = "NvdPkgNameVer"
+	// NvdmetaDb ...
+	NvdmetaDb = "NvdMeta"
+)
+
 /*Conn ... Create a database connection to */
 func Conn(dbPath string) *bolt.DB {
+	// Opening the connection on DB on given port
 	db, err := bolt.Open(dbPath, 0600, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -21,6 +35,7 @@ func Conn(dbPath string) *bolt.DB {
 
 //CreateDB ...
 func CreateDB(dbname string, db *bolt.DB) bool {
+	// Creating the bucket on already open DB
 	uerr := db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte(dbname))
 		if err != nil {
@@ -36,7 +51,7 @@ func CreateDB(dbname string, db *bolt.DB) bool {
 
 func updateNVD(schemas []Schema, mapList []map[string][]CVEId, db *bolt.DB) bool {
 	err := db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("NvdJSON"))
+		b := tx.Bucket([]byte(NvdDb))
 		for _, schema := range schemas {
 			encoded, err := json.Marshal(schema)
 			err = b.Put([]byte(schema.CveID), encoded)
@@ -46,18 +61,18 @@ func updateNVD(schemas []Schema, mapList []map[string][]CVEId, db *bolt.DB) bool
 		}
 		return nil
 	})
-	uerr := updateNVDPkg("NvdPkgVendor", mapList[0], db)
+	uerr := updateNVDPkg(VendorDb, mapList[0], db)
 	if uerr != nil {
 		fmt.Println("Unable to Update Vendor Package Bucket")
 		return false
 	}
-	uerr = updateNVDPkg("NvdPkgName", mapList[1], db)
+	uerr = updateNVDPkg(NameDb, mapList[1], db)
 	if uerr != nil {
 		fmt.Println("Unable to Update Name Package Bucket")
 		return false
 	}
 	//fmt.Println(mapList[2])
-	uerr = updateNVDPkg("NvdPkgNameVer", mapList[2], db)
+	uerr = updateNVDPkg(NameverDb, mapList[2], db)
 	if uerr != nil {
 		fmt.Println("Unable to Update Name-Version Package Bucket")
 		return false
@@ -69,16 +84,16 @@ func updateNVD(schemas []Schema, mapList []map[string][]CVEId, db *bolt.DB) bool
 }
 
 /*UpdateNVD ... Updating the NVD database */
-func updateNVDPkg(name string, pkgvendors map[string][]CVEId, db *bolt.DB) error {
+func updateNVDPkg(name string, pkgList map[string][]CVEId, db *bolt.DB) error {
 	var dbcveidlist []CVEId
 	//fmt.Println(db)
 	err := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(name))
-		for pkgvendor, cveidlist := range pkgvendors {
-			v := b.Get([]byte(pkgvendor))
+		for pkg, cveidlist := range pkgList {
+			v := b.Get([]byte(pkg))
 			if v == nil {
 				encode, _ := json.Marshal(cveidlist)
-				b.Put([]byte(pkgvendor), encode)
+				b.Put([]byte(pkg), encode)
 			} else {
 				err := json.Unmarshal(v, &dbcveidlist)
 				if err != nil {
@@ -87,7 +102,7 @@ func updateNVDPkg(name string, pkgvendors map[string][]CVEId, db *bolt.DB) error
 				}
 				cveidlist = append(cveidlist, dbcveidlist...)
 				encode, _ := json.Marshal(cveidlist)
-				b.Put([]byte(pkgvendor), encode)
+				b.Put([]byte(pkg), encode)
 			}
 		}
 		return nil
