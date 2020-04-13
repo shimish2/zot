@@ -505,9 +505,3 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 	mapList = append(mapList, pkgvendors, pkgnames, pkgnamevers)
 	return schemas, mapList
 }
-
-//IsExists ...
-func IsExists(filepath string) bool {
-	_, err := os.Stat(filepath)
-	return os.IsExist(err)
-}

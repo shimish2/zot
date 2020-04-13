@@ -1,6 +1,7 @@
 package utils_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/anuvu/zot/pkg/extensions/search/utils"
@@ -26,6 +27,10 @@ func TestCreateDb(t *testing.T) {
 	hasCreated := utils.CreateDB(dbName, db)
 	if !hasCreated {
 		t.Fatal("Unable to create bucket")
+	}
+	err := os.Remove("./testdata/db/Test.db")
+	if err != nil {
+		t.Fatal("Not able to remove Test Db file")
 	}
 	defer db.Close()
 }

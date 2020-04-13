@@ -127,7 +127,7 @@ func updateNVDMeta(filepath string, hashcode string, db *bolt.DB) bool {
 func isPresent(filename string, hashcode string, db *bolt.DB) bool {
 	var v []byte
 	err := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("NvdMeta"))
+		b := tx.Bucket([]byte(NvdmetaDb))
 		v = b.Get([]byte(filename))
 		return nil
 	})
@@ -137,6 +137,7 @@ func isPresent(filename string, hashcode string, db *bolt.DB) bool {
 		return false
 	}
 	if v == nil {
+		//fmt.Println("Null Value")
 		return false
 	}
 	res := bytes.Compare(v, ([]byte)(hashcode))
