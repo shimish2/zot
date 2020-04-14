@@ -16,6 +16,10 @@ import (
 	"gopkg.in/resty.v1"
 )
 
+const (
+	dbTestPath = "../../../data/db/ZotSearch.db"
+)
+
 var (
 	listenAddress = "127.0.0.1"
 )
@@ -58,6 +62,7 @@ func startServer() (*api.Controller, string) {
 	}
 
 	ctrl.Config.Storage.RootDirectory = dir
+	ctrl.DbPath = dbTestPath
 	go func() {
 		// this blocks
 		if err := ctrl.Run(); err != nil {
