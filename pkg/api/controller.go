@@ -16,16 +16,21 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	DbFilePath = "./data/db/ZotSearch.db"
+)
+
 type Controller struct {
 	Config     *Config
 	Router     *mux.Router
 	ImageStore *storage.ImageStore
 	Log        log.Logger
 	Server     *http.Server
+	DbPath     string
 }
 
 func NewController(config *Config) *Controller {
-	return &Controller{Config: config, Log: log.NewLogger(config.Log.Level, config.Log.Output)}
+	return &Controller{Config: config, Log: log.NewLogger(config.Log.Level, config.Log.Output), DbPath: DbFilePath}
 }
 
 func (c *Controller) Run() error {

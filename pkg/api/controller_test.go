@@ -42,6 +42,7 @@ const (
 	CACert                = "../../test/data/ca.crt"
 	AuthorizedNamespace   = "everyone/isallowed"
 	UnauthorizedNamespace = "fortknox/notallowed"
+	dbTestPath            = "../../data/db/ZotSearch.db"
 )
 
 type (
@@ -92,6 +93,7 @@ func TestBasicAuth(t *testing.T) {
 			},
 		}
 		c := api.NewController(config)
+		c.DbPath = dbTestPath
 		dir, err := ioutil.TempDir("", "oci-repo-test")
 		if err != nil {
 			panic(err)

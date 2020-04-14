@@ -42,7 +42,6 @@ const (
 	BlobUploadUUID       = "Blob-Upload-UUID"
 	DefaultMediaType     = "application/json"
 	BinaryMediaType      = "application/octet-stream"
-	DbPath               = "./data/db/ZotSearch.db"
 )
 
 type RouteHandler struct {
@@ -51,9 +50,8 @@ type RouteHandler struct {
 }
 
 func NewRouteHandler(c *Controller) *RouteHandler {
-	rh := &RouteHandler{c: c, db: utils.InitSearch(DbPath)}
+	rh := &RouteHandler{c: c, db: utils.InitSearch(c.DbPath)}
 	rh.SetupRoutes()
-
 	return rh
 }
 
