@@ -12,6 +12,7 @@ import (
 	"github.com/anuvu/zot/errors"
 	"github.com/anuvu/zot/pkg/log"
 	"github.com/anuvu/zot/pkg/storage"
+	"github.com/boltdb/bolt"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -27,6 +28,7 @@ type Controller struct {
 	Log        log.Logger
 	Server     *http.Server
 	DbPath     string
+	Db         *bolt.DB
 }
 
 func NewController(config *Config) *Controller {

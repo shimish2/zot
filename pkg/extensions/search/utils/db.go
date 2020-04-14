@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/boltdb/bolt"
 )
@@ -27,7 +26,7 @@ func Conn(dbPath string) *bolt.DB {
 	// Opening the connection on DB on given port
 	db, err := bolt.Open(dbPath, 0600, nil)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 		return nil
 	}
 	return db

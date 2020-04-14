@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	gqlHandler "github.com/99designs/gqlgen/handler"
-	"github.com/boltdb/bolt"
 
 	_ "github.com/anuvu/zot/docs" // nolint (golint) - as required by swaggo
 	"github.com/anuvu/zot/errors"
@@ -45,12 +44,12 @@ const (
 )
 
 type RouteHandler struct {
-	c  *Controller
-	db *bolt.DB
+	c *Controller
 }
 
 func NewRouteHandler(c *Controller) *RouteHandler {
-	rh := &RouteHandler{c: c, db: utils.InitSearch(c.DbPath)}
+	c.Db = utils.InitSearch(c.DbPath)
+	rh := &RouteHandler{c: c}
 	rh.SetupRoutes()
 	return rh
 }
@@ -108,7 +107,7 @@ func (rh *RouteHandler) SetupRoutes() {
 		g.HandleFunc("/_catalog",
 			rh.ListRepositories).Methods("GET")
 		g.HandleFunc("/", rh.CheckVersionSupport).Methods("GET")
-		g.HandleFunc("/query", gqlHandler.GraphQL(search.NewExecutableSchema(search.Config{Resolvers: &search.Resolver{Db: rh.db, Log: rh.c.Log}})))
+		g.HandleFunc("/query", gqlHandler.GraphQL(search.NewExecutableSchema(search.Config{Resolvers: &search.Resolver{Db: rh.c.Db, Log: rh.c.Log}})))
 	}
 	// swagger docs "/swagger/v2/index.html"
 	rh.c.Router.PathPrefix("/swagger/v2/").Methods("GET").Handler(httpSwagger.WrapHandler)

@@ -119,6 +119,7 @@ func TestBasicAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
+			c.Db.Close()
 		}()
 
 		// without creds, should get access error
@@ -191,6 +192,7 @@ func TestTLSWithBasicAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
+			c.Db.Close()
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -270,6 +272,7 @@ func TestTLSWithBasicAuthAllowReadAccess(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
+			c.Db.Close()
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -343,6 +346,7 @@ func TestTLSMutualAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
+			c.Db.Close()
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -429,6 +433,7 @@ func TestTLSMutualAuthAllowReadAccess(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
+			c.Db.Close()
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -528,6 +533,7 @@ func TestTLSMutualAndBasicAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
+			c.Db.Close()
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -624,6 +630,7 @@ func TestTLSMutualAndBasicAuthAllowReadAccess(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
+			c.Db.Close()
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -794,6 +801,7 @@ func TestBasicAuthWithLDAP(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
+			c.Db.Close()
 		}()
 
 		// without creds, should get access error
@@ -859,6 +867,7 @@ func TestBearerAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
+			c.Db.Close()
 		}()
 
 		blob := []byte("hello, blob!")

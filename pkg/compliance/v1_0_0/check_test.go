@@ -85,5 +85,6 @@ func startServer() (*api.Controller, string) {
 
 func stopServer(ctrl *api.Controller) {
 	ctrl.Server.Shutdown(context.Background())
+	ctrl.Db.Close()
 	os.RemoveAll(ctrl.Config.Storage.RootDirectory)
 }
