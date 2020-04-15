@@ -232,6 +232,7 @@ func InitSearch(dbPath string) *bolt.DB {
 //compares it in database and if not found, downloads the JSON file in zip format.
 func GetNvdData(filepath string, startYear int, endYear int, db *bolt.DB) error {
 	var header = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-"
+
 	for i := startYear; i < endYear; i++ {
 		// Meta File Name
 		metaFileName := strconv.FormatUint(uint64(i), 10) + ".meta"
@@ -335,7 +336,7 @@ func readJSON(filepath string) NvdJSON {
 	if err != nil {
 		fmt.Println(err)
 	}
-	err = json.Unmarshal([]byte(byteValue), &nvdjson)
+	err = json.Unmarshal(byteValue, &nvdjson)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -353,8 +354,6 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 		pkgnames    = make(map[string][]CVEId)
 		pkgnamevers = make(map[string][]CVEId)
 	)
-	// List of Vulnearibilities details per CVEId
-	vuldescs := []VulDetail{}
 	// List of pkgvendor, pkgname and pkgnameversion
 	var mapList []map[string][]CVEId
 	cveitems := nvdjson.CVEItems
@@ -365,7 +364,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 		// Unique cveid
 		cveid := CVEId{}
 		// Every Cveid or Cveitem contains list of vulnerabilities
-		vuldescs = []VulDetail{}
+		vuldescs := []VulDetail{}
 		// Every Cveid or Cveitem has vulnerabilities. Storing only unique PkgVendor, Name and Versions
 		vendorSet := map[string]struct{}{}
 		nameSet := map[string]struct{}{}
@@ -396,7 +395,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 						vuldesc.PkgVersion = splits[5]
 						vuldescs = append(vuldescs, vuldesc)
 						// Updating Package Vendor Map
-						list := []CVEId{}
+						//list := []CVEId{}
 						list, ok := pkgvendors[splits[3]]
 						if ok {
 							_, ok := vendorSet[splits[3]]
@@ -411,7 +410,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 						pkgvendors[splits[3]] = list
 
 						// Updating Package Name Map
-						list = []CVEId{}
+						//list = []CVEId{}
 						list, ok = pkgnames[splits[4]]
 						if ok {
 							_, ok = nameSet[splits[4]]
@@ -426,7 +425,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 						pkgnames[splits[4]] = list
 
 						// Updating Package Name Version Map
-						list = []CVEId{}
+						//list = []CVEId{}
 						list, ok = pkgnamevers[splits[4]+splits[5]]
 						if ok {
 							_, ok = nameverSet[splits[4]+splits[5]]
@@ -452,7 +451,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 					vuldesc.PkgName = splits[4]
 					vuldesc.PkgVersion = splits[5]
 					vuldescs = append(vuldescs, vuldesc)
-					list := []CVEId{}
+					//list := []CVEId{}
 					list, ok := pkgvendors[splits[3]]
 					if ok {
 						_, ok := vendorSet[splits[3]]
@@ -467,7 +466,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 					pkgvendors[splits[3]] = list
 
 					// Updating Package Name Map
-					list = []CVEId{}
+					//list = []CVEId{}
 					list, ok = pkgnames[splits[4]]
 					if ok {
 						_, ok = nameSet[splits[4]]
@@ -482,7 +481,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 					pkgnames[splits[4]] = list
 
 					// Updating Package Name Version Map
-					list = []CVEId{}
+					//list = []CVEId{}
 					list, ok = pkgnamevers[splits[4]+splits[5]]
 					if ok {
 						_, ok = nameverSet[splits[4]+splits[5]]
@@ -498,11 +497,14 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 				}
 			}
 		}
+
 		if len(vuldescs) != 0 {
 			schema.VulDetails = vuldescs
 			schemas = append(schemas, schema)
 		}
 	}
+
 	mapList = append(mapList, pkgvendors, pkgnames, pkgnamevers)
+
 	return schemas, mapList
 }

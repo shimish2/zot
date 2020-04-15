@@ -29,6 +29,7 @@ func Conn(dbPath string) *bolt.DB {
 		fmt.Println(err)
 		return nil
 	}
+
 	return db
 }
 
@@ -62,25 +63,29 @@ func updateNVD(schemas []Schema, mapList []map[string][]CVEId, db *bolt.DB) bool
 		}
 		return nil
 	})
+
 	uerr := updateNVDPkg(VendorDB, mapList[0], db)
 	if uerr != nil {
 		fmt.Println("Unable to Update Vendor Package Bucket")
 		return false
 	}
+
 	uerr = updateNVDPkg(NameDB, mapList[1], db)
 	if uerr != nil {
 		fmt.Println("Unable to Update Name Package Bucket")
 		return false
 	}
-	//fmt.Println(mapList[2])
+
 	uerr = updateNVDPkg(NameverDB, mapList[2], db)
 	if uerr != nil {
 		fmt.Println("Unable to Update Name-Version Package Bucket")
 		return false
 	}
+
 	if err != nil {
 		return false
 	}
+
 	return true
 }
 
@@ -112,8 +117,10 @@ func updateNVDPkg(name string, pkgList map[string][]CVEId, db *bolt.DB) error {
 				b.Put([]byte(pkg), encode)
 			}
 		}
+
 		return nil
 	})
+
 	return err
 }
 
@@ -134,6 +141,7 @@ func updateNVDMeta(filepath string, hashcode string, db *bolt.DB) bool {
 // Method to check if file content is already present in DB
 func isPresent(filename string, hashcode string, db *bolt.DB) bool {
 	var v []byte
+
 	err := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(NvdmetaDB))
 		v = b.Get([]byte(filename))
@@ -144,14 +152,16 @@ func isPresent(filename string, hashcode string, db *bolt.DB) bool {
 		fmt.Println(err)
 		return false
 	}
+
 	if v == nil {
-		//fmt.Println("Null Value")
 		return false
 	}
+
 	res := bytes.Compare(v, ([]byte)(hashcode))
 	if res == 0 {
 		return true
 	}
+
 	return false
 }
 

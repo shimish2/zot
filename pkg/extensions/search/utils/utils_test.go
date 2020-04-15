@@ -67,10 +67,8 @@ func TestSearchPkgNameVer(t *testing.T) {
 	result := utils.SearchByPkgType("NvdPkgNameVer", db, "bsd_os3.1")
 	if result == nil {
 		t.Fatal("Not able to search freebsd package vendor")
-	} else {
-		if len(result) == 0 {
-			t.Fatal("Empty list of CVEIDs")
-		}
+	} else if len(result) == 0 {
+		t.Fatal("Empty list of CVEIDs")
 	}
 	defer db.Close()
 }
