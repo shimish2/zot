@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	dbTestPath = "../../../data/db/ZotSearch.db"
+	DBTestPath = "../../../data/DB/ZotSearch.DB"
 )
 
 var (
@@ -62,7 +62,7 @@ func startServer() (*api.Controller, string) {
 	}
 
 	ctrl.Config.Storage.RootDirectory = dir
-	ctrl.DbPath = dbTestPath
+	ctrl.DBPath = DBTestPath
 	go func() {
 		// this blocks
 		if err := ctrl.Run(); err != nil {
@@ -85,6 +85,6 @@ func startServer() (*api.Controller, string) {
 
 func stopServer(ctrl *api.Controller) {
 	ctrl.Server.Shutdown(context.Background())
-	ctrl.Db.Close()
+	ctrl.DB.Close()
 	os.RemoveAll(ctrl.Config.Storage.RootDirectory)
 }

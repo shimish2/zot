@@ -5,15 +5,15 @@ package search
 import (
 	"context"
 
+	"github.com/anuvu/zot/pkg/extensions/search/utils"
 	"github.com/anuvu/zot/pkg/log"
 
-	"github.com/anuvu/zot/pkg/extensions/search/utils"
 	"github.com/boltdb/bolt"
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
 // Resolver ...
 type Resolver struct {
-	Db  *bolt.DB
+	DB  *bolt.DB
 	Log log.Logger
 }
 
@@ -25,14 +25,13 @@ func (r *Resolver) Query() QueryResolver {
 type queryResolver struct{ *Resolver }
 
 func (r *queryResolver) Repositories(ctx context.Context, name *string) ([]*Repository, error) {
-
 	return []*Repository{}, nil
 }
 
 func (r *queryResolver) CveIDSearch(ctx context.Context, text string) (*CVEIdResult, error) {
 	r.Log.Info().Msg("Inside Resolver")
-	var cveidresult = &CVEIdResult{}
-	ans := utils.SearchByCVEId(r.Db, text)
+	cveidresult := &CVEIdResult{}
+	ans := utils.SearchByCVEId(r.DB, text)
 	cveidresult.Name = &ans.CveID
 	cveidresult.VulDesc = &ans.VulDesc
 	cveidresult.VulDetails = make([]*VulDetail, len(ans.VulDetails))
@@ -49,8 +48,8 @@ func (r *queryResolver) CveIDSearch(ctx context.Context, text string) (*CVEIdRes
 }
 
 func (r *queryResolver) PkgVendor(ctx context.Context, text string) ([]*Cveid, error) {
-	ans := utils.SearchByPkgType("NvdPkgVendor", r.Db, text)
-	var cveids []*Cveid
+	ans := utils.SearchByPkgType("NvdPkgVendor", r.DB, text)
+	cveids := []*Cveid{}
 	for _, cveid := range ans {
 		name := cveid.Name
 		cveids = append(cveids, &Cveid{Name: &name})
@@ -59,8 +58,8 @@ func (r *queryResolver) PkgVendor(ctx context.Context, text string) ([]*Cveid, e
 }
 
 func (r *queryResolver) PkgName(ctx context.Context, text string) ([]*Cveid, error) {
-	ans := utils.SearchByPkgType("NvdPkgName", r.Db, text)
-	var cveids []*Cveid
+	ans := utils.SearchByPkgType("NvdPkgName", r.DB, text)
+	cveids := []*Cveid{}
 	for _, cveid := range ans {
 		name := cveid.Name
 		cveids = append(cveids, &Cveid{Name: &name})
@@ -69,7 +68,7 @@ func (r *queryResolver) PkgName(ctx context.Context, text string) ([]*Cveid, err
 }
 
 func (r *queryResolver) PkgNameVer(ctx context.Context, text string) ([]*Cveid, error) {
-	ans := utils.SearchByPkgType("NvdPkgNameVer", r.Db, text)
+	ans := utils.SearchByPkgType("NvdPkgNameVer", r.DB, text)
 	var cveids []*Cveid
 	for _, cveid := range ans {
 		name := cveid.Name

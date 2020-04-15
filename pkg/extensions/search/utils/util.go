@@ -212,11 +212,11 @@ func InitSearch(dbPath string) *bolt.DB {
 	var db *bolt.DB
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		db = Conn(dbPath)
-		nvdjsondb := CreateDB(NvdDb, db)
-		pkgvendordb := CreateDB(VendorDb, db)
-		pkgnamedb := CreateDB(NameDb, db)
-		pkgnameverdb := CreateDB(NameverDb, db)
-		nvdmeatabd := CreateDB(NvdmetaDb, db)
+		nvdjsondb := CreateDB(NvdDB, db)
+		pkgvendordb := CreateDB(VendorDB, db)
+		pkgnamedb := CreateDB(NameDB, db)
+		pkgnameverdb := CreateDB(NameverDB, db)
+		nvdmeatabd := CreateDB(NvdmetaDB, db)
 		if !nvdjsondb || !nvdmeatabd || !pkgvendordb || !pkgnamedb || !pkgnameverdb {
 			fmt.Println("Not able to Create Database")
 			return nil
@@ -227,8 +227,9 @@ func InitSearch(dbPath string) *bolt.DB {
 	return db
 }
 
-/*GetNvdData ... This function downloads the .meta files, reads the hashcode of json files, compares it in database and if not found, downloads the JSON file in zip format.
- */
+// GetNvdData ...
+//This function downloads the .meta files, reads the hashcode of json files,
+//compares it in database and if not found, downloads the JSON file in zip format.
 func GetNvdData(filepath string, startYear int, endYear int, db *bolt.DB) error {
 	var header = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-"
 	for i := startYear; i < endYear; i++ {
@@ -262,7 +263,7 @@ func GetNvdData(filepath string, startYear int, endYear int, db *bolt.DB) error 
 			if strings.Contains(line, "sha256") {
 				hashcode := strings.Split(line, ":")[1]
 				// Checking if file having same name and hashcode is already downloaded...
-				if isPresent(metaFileName, hashcode, db) != true {
+				if !isPresent(metaFileName, hashcode, db) {
 					err := downloadFile(path.Join(filepath, zipFileName), zipURL)
 					if err != nil {
 						return err
@@ -286,6 +287,7 @@ func GetNvdData(filepath string, startYear int, endYear int, db *bolt.DB) error 
 
 /* Download and saves the file with given filepath */
 func downloadFile(filepath string, url string) error {
+	// nolint (gosec)
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -301,7 +303,6 @@ func downloadFile(filepath string, url string) error {
 	_, err = io.Copy(out, resp.Body)
 
 	return err
-
 }
 
 /* Unzipping the files and storing all the unzipped files */
@@ -344,14 +345,16 @@ func readJSON(filepath string) NvdJSON {
 
 /*ExtractSchema ... Extracting the Schema */
 func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
-	// This variable stores list of CVEIds and its detailed description
-	var schemas []Schema
+	var (
+		// This variable stores list of CVEIds and its detailed description
+		schemas []Schema
+		// Map of pkgvendor and list of cveids per json file
+		pkgvendors  = make(map[string][]CVEId)
+		pkgnames    = make(map[string][]CVEId)
+		pkgnamevers = make(map[string][]CVEId)
+	)
 	// List of Vulnearibilities details per CVEId
 	vuldescs := []VulDetail{}
-	// Map of pkgvendor and list of cveids per json file
-	var pkgvendors = make(map[string][]CVEId)
-	var pkgnames = make(map[string][]CVEId)
-	var pkgnamevers = make(map[string][]CVEId)
 	// List of pkgvendor, pkgname and pkgnameversion
 	var mapList []map[string][]CVEId
 	cveitems := nvdjson.CVEItems
@@ -494,13 +497,11 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 					pkgnamevers[splits[4]+splits[5]] = list
 				}
 			}
-
 		}
 		if len(vuldescs) != 0 {
 			schema.VulDetails = vuldescs
 			schemas = append(schemas, schema)
 		}
-
 	}
 	mapList = append(mapList, pkgvendors, pkgnames, pkgnamevers)
 	return schemas, mapList

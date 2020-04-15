@@ -12,14 +12,14 @@ const dbName = "NvdJSON"
 
 func TestConn(t *testing.T) {
 	db := utils.Conn(filePath)
+	defer db.Close()
 	if db == nil {
 		t.Fatal("Unable to open db")
 	}
-	defer db.Close()
 }
-
 func TestCreateDb(t *testing.T) {
 	db := utils.Conn(filePath)
+	defer db.Close()
 	if db == nil {
 		t.Fatal("Unable to open db")
 	}
@@ -28,9 +28,9 @@ func TestCreateDb(t *testing.T) {
 	if !hasCreated {
 		t.Fatal("Unable to create bucket")
 	}
+
 	err := os.Remove("./testdata/db/Test.db")
 	if err != nil {
 		t.Fatal("Not able to remove Test Db file")
 	}
-	defer db.Close()
 }

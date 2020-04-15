@@ -93,7 +93,7 @@ func TestBasicAuth(t *testing.T) {
 			},
 		}
 		c := api.NewController(config)
-		c.DbPath = dbTestPath
+		c.DBPath = dbTestPath
 		dir, err := ioutil.TempDir("", "oci-repo-test")
 		if err != nil {
 			panic(err)
@@ -119,7 +119,7 @@ func TestBasicAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.Db.Close()
+			c.DB.Close()
 		}()
 
 		// without creds, should get access error
@@ -172,7 +172,7 @@ func TestTLSWithBasicAuth(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DbPath = dbTestPath
+		c.DBPath = dbTestPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -192,7 +192,7 @@ func TestTLSWithBasicAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.Db.Close()
+			c.DB.Close()
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -252,7 +252,7 @@ func TestTLSWithBasicAuthAllowReadAccess(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DbPath = dbTestPath
+		c.DBPath = dbTestPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -272,7 +272,7 @@ func TestTLSWithBasicAuthAllowReadAccess(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.Db.Close()
+			c.DB.Close()
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -326,7 +326,7 @@ func TestTLSMutualAuth(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DbPath = dbTestPath
+		c.DBPath = dbTestPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -346,7 +346,7 @@ func TestTLSMutualAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.Db.Close()
+			c.DB.Close()
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -413,7 +413,7 @@ func TestTLSMutualAuthAllowReadAccess(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DbPath = dbTestPath
+		c.DBPath = dbTestPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -433,7 +433,7 @@ func TestTLSMutualAuthAllowReadAccess(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.Db.Close()
+			c.DB.Close()
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -513,7 +513,7 @@ func TestTLSMutualAndBasicAuth(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DbPath = dbTestPath
+		c.DBPath = dbTestPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -533,7 +533,7 @@ func TestTLSMutualAndBasicAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.Db.Close()
+			c.DB.Close()
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -610,7 +610,7 @@ func TestTLSMutualAndBasicAuthAllowReadAccess(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DbPath = dbTestPath
+		c.DBPath = dbTestPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -630,7 +630,7 @@ func TestTLSMutualAndBasicAuthAllowReadAccess(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.Db.Close()
+			c.DB.Close()
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -781,7 +781,7 @@ func TestBasicAuthWithLDAP(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DbPath = dbTestPath
+		c.DBPath = dbTestPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -801,7 +801,7 @@ func TestBasicAuthWithLDAP(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.Db.Close()
+			c.DB.Close()
 		}()
 
 		// without creds, should get access error
@@ -847,7 +847,7 @@ func TestBearerAuth(t *testing.T) {
 		So(err, ShouldBeNil)
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DbPath = dbTestPath
+		c.DBPath = dbTestPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -867,7 +867,7 @@ func TestBearerAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.Db.Close()
+			c.DB.Close()
 		}()
 
 		blob := []byte("hello, blob!")

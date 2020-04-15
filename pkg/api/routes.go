@@ -48,9 +48,10 @@ type RouteHandler struct {
 }
 
 func NewRouteHandler(c *Controller) *RouteHandler {
-	c.Db = utils.InitSearch(c.DbPath)
+	c.DB = utils.InitSearch(c.DBPath)
 	rh := &RouteHandler{c: c}
 	rh.SetupRoutes()
+
 	return rh
 }
 
@@ -107,7 +108,8 @@ func (rh *RouteHandler) SetupRoutes() {
 		g.HandleFunc("/_catalog",
 			rh.ListRepositories).Methods("GET")
 		g.HandleFunc("/", rh.CheckVersionSupport).Methods("GET")
-		g.HandleFunc("/query", gqlHandler.GraphQL(search.NewExecutableSchema(search.Config{Resolvers: &search.Resolver{Db: rh.c.Db, Log: rh.c.Log}})))
+		//nolint (lll)
+		g.HandleFunc("/query", gqlHandler.GraphQL(search.NewExecutableSchema(search.Config{Resolvers: &search.Resolver{DB: rh.c.DB, Log: rh.c.Log}})))
 	}
 	// swagger docs "/swagger/v2/index.html"
 	rh.c.Router.PathPrefix("/swagger/v2/").Methods("GET").Handler(httpSwagger.WrapHandler)

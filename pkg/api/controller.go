@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	DbFilePath = "./data/db/ZotSearch.db"
+	DBFilePath = "./data/db/ZotSearch.db"
 )
 
 type Controller struct {
@@ -27,12 +27,12 @@ type Controller struct {
 	ImageStore *storage.ImageStore
 	Log        log.Logger
 	Server     *http.Server
-	DbPath     string
-	Db         *bolt.DB
+	DBPath     string
+	DB         *bolt.DB
 }
 
 func NewController(config *Config) *Controller {
-	return &Controller{Config: config, Log: log.NewLogger(config.Log.Level, config.Log.Output), DbPath: DbFilePath}
+	return &Controller{Config: config, Log: log.NewLogger(config.Log.Level, config.Log.Output), DBPath: DBFilePath}
 }
 
 func (c *Controller) Run() error {
