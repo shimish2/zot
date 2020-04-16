@@ -45,6 +45,7 @@ const (
 	UnauthorizedNamespace = "fortknox/notallowed"
 )
 
+// nolint (gochecknoglobals)
 var (
 	DBPath = ""
 	DBdir  = ""

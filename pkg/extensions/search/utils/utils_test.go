@@ -41,7 +41,6 @@ func TestUtil(t *testing.T) {
 		t.Fatal("Unable to open db")
 	}
 
-	
 	err = utils.GetNvdData(DBdir, 2002, 2003, db)
 	if err != nil {
 		t.Fatal("Unable to Get the Data")
