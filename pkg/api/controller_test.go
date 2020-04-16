@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"testing"
@@ -42,7 +43,11 @@ const (
 	CACert                = "../../test/data/ca.crt"
 	AuthorizedNamespace   = "everyone/isallowed"
 	UnauthorizedNamespace = "fortknox/notallowed"
-	dbTestPath            = "../../test/data/ZotSearch.db"
+)
+
+var (
+	DBPath = ""
+	DBdir  = ""
 )
 
 type (
@@ -56,6 +61,19 @@ type (
 		Scope   string
 	}
 )
+
+func testSetup() error {
+	dir, err := ioutil.TempDir("", "util_test")
+	if err != nil {
+		return err
+	}
+
+	DBdir = dir
+
+	DBPath = path.Join(DBdir, "Test.db")
+
+	return nil
+}
 
 func makeHtpasswdFile() string {
 	f, err := ioutil.TempFile("", "htpasswd-")
@@ -73,6 +91,11 @@ func makeHtpasswdFile() string {
 }
 
 func TestNew(t *testing.T) {
+	err := testSetup()
+	if err != nil {
+		t.Fatal("Unable to Setup Test environment")
+	}
+
 	Convey("Make a new controller", t, func() {
 		config := api.NewConfig()
 		So(config, ShouldNotBeNil)
@@ -93,7 +116,7 @@ func TestBasicAuth(t *testing.T) {
 			},
 		}
 		c := api.NewController(config)
-		c.DBPath = dbTestPath
+		c.DBPath = DBPath
 		dir, err := ioutil.TempDir("", "oci-repo-test")
 		if err != nil {
 			panic(err)
@@ -172,7 +195,7 @@ func TestTLSWithBasicAuth(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = dbTestPath
+		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -252,7 +275,7 @@ func TestTLSWithBasicAuthAllowReadAccess(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = dbTestPath
+		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -326,7 +349,7 @@ func TestTLSMutualAuth(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = dbTestPath
+		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -413,7 +436,7 @@ func TestTLSMutualAuthAllowReadAccess(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = dbTestPath
+		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -513,7 +536,7 @@ func TestTLSMutualAndBasicAuth(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = dbTestPath
+		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -610,7 +633,7 @@ func TestTLSMutualAndBasicAuthAllowReadAccess(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = dbTestPath
+		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -781,7 +804,7 @@ func TestBasicAuthWithLDAP(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = dbTestPath
+		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -847,7 +870,7 @@ func TestBearerAuth(t *testing.T) {
 		So(err, ShouldBeNil)
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = dbTestPath
+		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
