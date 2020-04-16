@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	DBTestPath = "../../../data/DB/ZotSearch.DB"
+	DBTestPath = "../../../test/data/ZotSearch.db"
 )
 
 var (

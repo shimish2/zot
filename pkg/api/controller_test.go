@@ -42,7 +42,7 @@ const (
 	CACert                = "../../test/data/ca.crt"
 	AuthorizedNamespace   = "everyone/isallowed"
 	UnauthorizedNamespace = "fortknox/notallowed"
-	dbTestPath            = "../../data/db/ZotSearch.db"
+	dbTestPath            = "../../test/data/ZotSearch.db"
 )
 
 type (

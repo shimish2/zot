@@ -50,6 +50,7 @@ func CreateDB(dbname string, db *bolt.DB) bool {
 func updateNVD(schemas []Schema, mapList []map[string][]CVEId, db *bolt.DB) bool {
 	err := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(NvdDB))
+
 		for _, schema := range schemas {
 			encoded, err := json.Marshal(schema)
 			if err != nil {
@@ -73,32 +74,31 @@ func updateNVD(schemas []Schema, mapList []map[string][]CVEId, db *bolt.DB) bool
 	uerr = updateNVDPkg(NameDB, mapList[1], db)
 	if uerr != nil {
 		fmt.Println("Unable to Update Name Package Bucket")
+
 		return false
 	}
 
 	uerr = updateNVDPkg(NameverDB, mapList[2], db)
 	if uerr != nil {
 		fmt.Println("Unable to Update Name-Version Package Bucket")
+
 		return false
 	}
 
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 /*UpdateNVD ... Updating the NVD database */
 func updateNVDPkg(name string, pkgList map[string][]CVEId, db *bolt.DB) error {
 	var dbcveidlist []CVEId
-	//fmt.Println(db)
+
 	err := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(name))
 		for pkg, cveidlist := range pkgList {
 			v := b.Get([]byte(pkg))
 			if v == nil {
 				encode, _ := json.Marshal(cveidlist)
+
 				err := b.Put([]byte(pkg), encode)
 				if err != nil {
 					fmt.Println("Unable to Insert Data from PkgVendor Bucket")
@@ -112,9 +112,17 @@ func updateNVDPkg(name string, pkgList map[string][]CVEId, db *bolt.DB) error {
 
 					return err
 				}
+
 				cveidlist = append(cveidlist, dbcveidlist...)
+
 				encode, _ := json.Marshal(cveidlist)
-				b.Put([]byte(pkg), encode)
+
+				err = b.Put([]byte(pkg), encode)
+				if err != nil {
+					fmt.Println("Unable to Insert Data from PkgVendor Bucket")
+
+					return err
+				}
 			}
 		}
 
@@ -128,10 +136,12 @@ func updateNVDPkg(name string, pkgList map[string][]CVEId, db *bolt.DB) error {
 func updateNVDMeta(filepath string, hashcode string, db *bolt.DB) bool {
 	err := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("NvdMeta"))
+
 		err := b.Put([]byte(filepath), []byte(hashcode))
 		if err != nil {
 			return err
 		}
+
 		return nil
 	})
 
@@ -144,12 +154,15 @@ func isPresent(filename string, hashcode string, db *bolt.DB) bool {
 
 	err := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(NvdmetaDB))
+
 		v = b.Get([]byte(filename))
+
 		return nil
 	})
 	if err != nil {
 		fmt.Println("Not able to search")
 		fmt.Println(err)
+
 		return false
 	}
 
@@ -158,18 +171,17 @@ func isPresent(filename string, hashcode string, db *bolt.DB) bool {
 	}
 
 	res := bytes.Compare(v, ([]byte)(hashcode))
-	if res == 0 {
-		return true
-	}
 
-	return false
+	return res == 0
 }
 
 // SearchByCVEId ...
 func SearchByCVEId(db *bolt.DB, key string) *Schema {
 	var schema Schema
+
 	err := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("NvdJSON"))
+
 		v := b.Get([]byte(key))
 		if v == nil {
 			schema = Schema{}
@@ -179,6 +191,7 @@ func SearchByCVEId(db *bolt.DB, key string) *Schema {
 				schema = Schema{}
 			}
 		}
+
 		return nil
 	})
 	if err != nil {
@@ -191,8 +204,10 @@ func SearchByCVEId(db *bolt.DB, key string) *Schema {
 // SearchByPkgType ...
 func SearchByPkgType(name string, db *bolt.DB, key string) []CVEId {
 	var cveidlist []CVEId
+
 	err := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(name))
+
 		v := b.Get([]byte(key))
 		if v == nil {
 			cveidlist = []CVEId{}
@@ -203,6 +218,7 @@ func SearchByPkgType(name string, db *bolt.DB, key string) []CVEId {
 				cveidlist = []CVEId{}
 			}
 		}
+
 		return nil
 	})
 	if err != nil {

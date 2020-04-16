@@ -17,6 +17,16 @@ go_test(
         "db_test.go",
         "utils_test.go",
     ],
-    data = glob(["testdata/**"]),
+    data = [
+        ":search_testdata",
+    ],
     embed = [":go_default_library"],
+)
+
+filegroup(
+    name = "search_testdata",
+    srcs = glob([
+        "testdata/**",
+    ]),
+    visibility = ["//visibility:public"],
 )

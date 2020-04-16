@@ -29,7 +29,6 @@ func (r *queryResolver) Repositories(ctx context.Context, name *string) ([]*Repo
 }
 
 func (r *queryResolver) CveIDSearch(ctx context.Context, text string) (*CVEIdResult, error) {
-	r.Log.Info().Msg("Inside Resolver")
 	cveidresult := &CVEIdResult{}
 	ans := utils.SearchByCVEId(r.DB, text)
 	cveidresult.Name = &ans.CveID
@@ -55,6 +54,7 @@ func (r *queryResolver) PkgVendor(ctx context.Context, text string) ([]*Cveid, e
 
 	for _, cveid := range ans {
 		name := cveid.Name
+
 		cveids = append(cveids, &Cveid{Name: &name})
 	}
 
@@ -64,19 +64,25 @@ func (r *queryResolver) PkgVendor(ctx context.Context, text string) ([]*Cveid, e
 func (r *queryResolver) PkgName(ctx context.Context, text string) ([]*Cveid, error) {
 	ans := utils.SearchByPkgType("NvdPkgName", r.DB, text)
 	cveids := []*Cveid{}
+
 	for _, cveid := range ans {
 		name := cveid.Name
+
 		cveids = append(cveids, &Cveid{Name: &name})
 	}
+
 	return cveids, nil
 }
 
 func (r *queryResolver) PkgNameVer(ctx context.Context, text string) ([]*Cveid, error) {
 	ans := utils.SearchByPkgType("NvdPkgNameVer", r.DB, text)
 	cveids := []*Cveid{}
+
 	for _, cveid := range ans {
 		name := cveid.Name
+
 		cveids = append(cveids, &Cveid{Name: &name})
 	}
+
 	return cveids, nil
 }

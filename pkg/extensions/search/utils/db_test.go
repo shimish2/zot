@@ -1,35 +1,60 @@
-package utils_test
+package utils
 
 import (
+	"io/ioutil"
 	"os"
+	"path"
 	"testing"
-
-	"github.com/anuvu/zot/pkg/extensions/search/utils"
 )
 
-const filePath = "./testdata/db/Test.db"
 const dbName = "NvdJSON"
 
+// nolint (gochecknoglobals)
+var (
+	DBPath = ""
+	DBdir  = ""
+)
+
+func testSetup() error {
+	dir, err := ioutil.TempDir("", "util_test")
+	if err != nil {
+		return err
+	}
+
+	DBdir = dir
+
+	DBPath = path.Join(DBdir, "Test.db")
+
+	return nil
+}
+
 func TestConn(t *testing.T) {
-	db := utils.Conn(filePath)
+	err := testSetup()
+	if err != nil {
+		t.Fatal("Unable to Setup Test environment")
+	}
+
+	db := Conn(DBPath)
 	defer db.Close()
+
 	if db == nil {
 		t.Fatal("Unable to open db")
 	}
 }
 func TestCreateDb(t *testing.T) {
-	db := utils.Conn(filePath)
+	db := Conn(DBPath)
 	defer db.Close()
+
 	if db == nil {
 		t.Fatal("Unable to open db")
 	}
 
-	hasCreated := utils.CreateDB(dbName, db)
+	hasCreated := CreateDB(dbName, db)
 	if !hasCreated {
 		t.Fatal("Unable to create bucket")
 	}
 
-	err := os.Remove("./testdata/db/Test.db")
+	err := os.RemoveAll(DBdir)
 	if err != nil {
 		t.Fatal("Not able to remove Test Db file")
 	}

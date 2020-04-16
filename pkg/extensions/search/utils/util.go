@@ -210,6 +210,7 @@ type CVEId struct {
 // InitSearch ...
 func InitSearch(dbPath string) *bolt.DB {
 	var db *bolt.DB
+
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		db = Conn(dbPath)
 		nvdjsondb := CreateDB(NvdDB, db)
@@ -217,13 +218,16 @@ func InitSearch(dbPath string) *bolt.DB {
 		pkgnamedb := CreateDB(NameDB, db)
 		pkgnameverdb := CreateDB(NameverDB, db)
 		nvdmeatabd := CreateDB(NvdmetaDB, db)
+
 		if !nvdjsondb || !nvdmeatabd || !pkgvendordb || !pkgnamedb || !pkgnameverdb {
 			fmt.Println("Not able to Create Database")
+
 			return nil
 		}
 	} else {
 		db = Conn(dbPath)
 	}
+
 	return db
 }
 
@@ -248,6 +252,7 @@ func GetNvdData(filepath string, startYear int, endYear int, db *bolt.DB) error 
 		err := downloadFile(path.Join(filepath, metaFileName), metaURL)
 		if err != nil {
 			fmt.Println("Not able to Download the Meta file")
+
 			return err
 		}
 		// Opening the Meta File
@@ -255,6 +260,7 @@ func GetNvdData(filepath string, startYear int, endYear int, db *bolt.DB) error 
 		if err != nil {
 			fmt.Println("Unable to Open Meta File")
 			fmt.Println(err)
+
 			return err
 		}
 		// Scanning the .meta file to find SHA256 code
@@ -269,10 +275,12 @@ func GetNvdData(filepath string, startYear int, endYear int, db *bolt.DB) error 
 					if err != nil {
 						return err
 					}
+
 					err = unzipFiles(filepath, zipFileName)
 					if err != nil {
 						return err
 					}
+
 					nvdjson := readJSON(path.Join(filepath, jsonFileName))
 					nvdschema, mapList := extractSchema(nvdjson)
 					// Updating the NVD Data
@@ -283,6 +291,7 @@ func GetNvdData(filepath string, startYear int, endYear int, db *bolt.DB) error 
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -320,27 +329,33 @@ func unzipFiles(filepath string, filename string) error {
 	if err != nil {
 		return err
 	}
+
 	// Reading from unzipped file
 	readJSON, err := files[0].Open()
 	if err != nil {
 		return err
 	}
+
 	_, err = io.Copy(outFile, readJSON)
+
 	return err
 }
 
 /*ReadJSON ... Reading the JSON files */
 func readJSON(filepath string) NvdJSON {
 	var nvdjson NvdJSON
+
 	byteValue, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	err = json.Unmarshal(byteValue, &nvdjson)
 	if err != nil {
 		fmt.Println(err)
 	}
 	//fmt.Println(nvdjson.CVEItems[0].Configuration)
+
 	return nvdjson
 }
 
@@ -356,6 +371,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 	)
 	// List of pkgvendor, pkgname and pkgnameversion
 	var mapList []map[string][]CVEId
+
 	cveitems := nvdjson.CVEItems
 	// Iterating through the cveitems
 	for _, cveitem := range cveitems {
@@ -407,6 +423,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 							list = append(list, cveid)
 							vendorSet[splits[3]] = struct{}{}
 						}
+
 						pkgvendors[splits[3]] = list
 
 						// Updating Package Name Map
@@ -422,6 +439,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 							list = append(list, cveid)
 							nameSet[splits[4]] = struct{}{}
 						}
+
 						pkgnames[splits[4]] = list
 
 						// Updating Package Name Version Map
@@ -437,6 +455,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 							list = append(list, cveid)
 							nameverSet[splits[4]+splits[5]] = struct{}{}
 						}
+
 						pkgnamevers[splits[4]+splits[5]] = list
 					}
 				}
@@ -463,6 +482,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 						list = append(list, cveid)
 						vendorSet[splits[3]] = struct{}{}
 					}
+
 					pkgvendors[splits[3]] = list
 
 					// Updating Package Name Map
@@ -478,6 +498,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 						list = append(list, cveid)
 						nameSet[splits[4]] = struct{}{}
 					}
+
 					pkgnames[splits[4]] = list
 
 					// Updating Package Name Version Map
@@ -493,6 +514,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 						list = append(list, cveid)
 						nameverSet[splits[4]+splits[5]] = struct{}{}
 					}
+
 					pkgnamevers[splits[4]+splits[5]] = list
 				}
 			}
@@ -503,7 +525,7 @@ func extractSchema(nvdjson NvdJSON) ([]Schema, []map[string][]CVEId) {
 			schemas = append(schemas, schema)
 		}
 	}
-
+	// nolint (wsl)
 	mapList = append(mapList, pkgvendors, pkgnames, pkgnamevers)
 
 	return schemas, mapList
