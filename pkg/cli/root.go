@@ -47,6 +47,7 @@ func NewRootCmd() *cobra.Command {
 					panic(errors.ErrBadConfig)
 				}
 			}
+			config.Extension.Search.Cve = api.NewCveConfig(config.Extension.Search.DBPath, config.Log)
 			c := api.NewController(config)
 			if err := c.Run(); err != nil {
 				panic(err)
