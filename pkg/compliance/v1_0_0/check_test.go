@@ -20,8 +20,8 @@ import (
 // nolint (gochecknoglobals)
 var (
 	listenAddress = "127.0.0.1"
-	DBPath        = ""
-	DBdir         = ""
+	dbPath        = ""
+	dbDir         = ""
 )
 
 func testSetup() error {
@@ -30,9 +30,9 @@ func testSetup() error {
 		return err
 	}
 
-	DBdir = dir
+	dbDir = dir
 
-	DBPath = path.Join(DBdir, "Test.db")
+	dbPath = path.Join(dbDir, "Test.db")
 
 	return nil
 }
@@ -62,7 +62,7 @@ func TestWorkflowsOutputJSON(t *testing.T) {
 }
 
 func TestCreateDb(t *testing.T) {
-	err := os.RemoveAll(DBdir)
+	err := os.RemoveAll(dbDir)
 	if err != nil {
 		t.Fatal("Not able to remove Test Db file")
 	}
@@ -80,6 +80,8 @@ func startServer() (*api.Controller, string) {
 	config := api.NewConfig()
 	config.HTTP.Address = listenAddress
 	config.HTTP.Port = randomPort
+	config.Extension.Search.DBPath = dbPath
+	config.Extension.Search.Cve = api.NewCveConfig(dbPath, config.Log)
 	ctrl := api.NewController(config)
 	dir, err := ioutil.TempDir("", "oci-repo-test")
 	if err != nil {
@@ -87,7 +89,6 @@ func startServer() (*api.Controller, string) {
 	}
 
 	ctrl.Config.Storage.RootDirectory = dir
-	ctrl.DBPath = DBPath
 	go func() {
 		// this blocks
 		if err := ctrl.Run(); err != nil {
@@ -109,6 +110,6 @@ func startServer() (*api.Controller, string) {
 
 func stopServer(ctrl *api.Controller) {
 	ctrl.Server.Shutdown(context.Background())
-	ctrl.DB.Close()
 	os.RemoveAll(ctrl.Config.Storage.RootDirectory)
+	api.Close(ctrl.Config.Extension.Search.Cve)
 }

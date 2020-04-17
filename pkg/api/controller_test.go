@@ -47,8 +47,8 @@ const (
 
 // nolint (gochecknoglobals)
 var (
-	DBPath = ""
-	DBdir  = ""
+	dbPath = ""
+	dbdir  = ""
 )
 
 type (
@@ -69,9 +69,9 @@ func testSetup() error {
 		return err
 	}
 
-	DBdir = dir
+	dbdir = dir
 
-	DBPath = path.Join(DBdir, "Test.db")
+	dbPath = path.Join(dbdir, "Test.db")
 
 	return nil
 }
@@ -116,8 +116,11 @@ func TestBasicAuth(t *testing.T) {
 				Path: htpasswdPath,
 			},
 		}
+
+		config.Extension.Search.DBPath = dbPath
+		config.Extension.Search.Cve = api.NewCveConfig(dbPath, config.Log)
+
 		c := api.NewController(config)
-		c.DBPath = DBPath
 		dir, err := ioutil.TempDir("", "oci-repo-test")
 		if err != nil {
 			panic(err)
@@ -143,7 +146,7 @@ func TestBasicAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.DB.Close()
+			_ = api.Close(config.Extension.Search.Cve)
 		}()
 
 		// without creds, should get access error
@@ -152,6 +155,14 @@ func TestBasicAuth(t *testing.T) {
 		So(resp, ShouldNotBeNil)
 		So(resp.StatusCode(), ShouldEqual, 401)
 		var e api.Error
+		err = json.Unmarshal(resp.Body(), &e)
+		So(err, ShouldBeNil)
+
+		// without creds, should get access error to graphql route also
+		resp, err = resty.R().Get(BaseURL1 + "/v2/query")
+		So(err, ShouldBeNil)
+		So(resp, ShouldNotBeNil)
+		So(resp.StatusCode(), ShouldEqual, 401)
 		err = json.Unmarshal(resp.Body(), &e)
 		So(err, ShouldBeNil)
 
@@ -189,6 +200,9 @@ func TestTLSWithBasicAuth(t *testing.T) {
 			},
 		}
 
+		config.Extension.Search.DBPath = dbPath
+		config.Extension.Search.Cve = api.NewCveConfig(dbPath, config.Log)
+
 		c := api.NewController(config)
 		dir, err := ioutil.TempDir("", "oci-repo-test")
 		if err != nil {
@@ -196,7 +210,6 @@ func TestTLSWithBasicAuth(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -216,7 +229,7 @@ func TestTLSWithBasicAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.DB.Close()
+			_ = api.Close(config.Extension.Search.Cve)
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -269,6 +282,9 @@ func TestTLSWithBasicAuthAllowReadAccess(t *testing.T) {
 		}
 		config.HTTP.AllowReadAccess = true
 
+		config.Extension.Search.DBPath = dbPath
+		config.Extension.Search.Cve = api.NewCveConfig(dbPath, config.Log)
+
 		c := api.NewController(config)
 		dir, err := ioutil.TempDir("", "oci-repo-test")
 		if err != nil {
@@ -276,7 +292,6 @@ func TestTLSWithBasicAuthAllowReadAccess(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -296,7 +311,7 @@ func TestTLSWithBasicAuthAllowReadAccess(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.DB.Close()
+			_ = api.Close(config.Extension.Search.Cve)
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -343,6 +358,9 @@ func TestTLSMutualAuth(t *testing.T) {
 			CACert: CACert,
 		}
 
+		config.Extension.Search.DBPath = dbPath
+		config.Extension.Search.Cve = api.NewCveConfig(dbPath, config.Log)
+
 		c := api.NewController(config)
 		dir, err := ioutil.TempDir("", "oci-repo-test")
 		if err != nil {
@@ -350,7 +368,6 @@ func TestTLSMutualAuth(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -370,7 +387,7 @@ func TestTLSMutualAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.DB.Close()
+			_ = api.Close(config.Extension.Search.Cve)
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -430,6 +447,9 @@ func TestTLSMutualAuthAllowReadAccess(t *testing.T) {
 		}
 		config.HTTP.AllowReadAccess = true
 
+		config.Extension.Search.DBPath = dbPath
+		config.Extension.Search.Cve = api.NewCveConfig(dbPath, config.Log)
+
 		c := api.NewController(config)
 		dir, err := ioutil.TempDir("", "oci-repo-test")
 		if err != nil {
@@ -437,7 +457,6 @@ func TestTLSMutualAuthAllowReadAccess(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -457,7 +476,7 @@ func TestTLSMutualAuthAllowReadAccess(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.DB.Close()
+			_ = api.Close(config.Extension.Search.Cve)
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -529,6 +548,8 @@ func TestTLSMutualAndBasicAuth(t *testing.T) {
 			Key:    ServerKey,
 			CACert: CACert,
 		}
+		config.Extension.Search.DBPath = dbPath
+		config.Extension.Search.Cve = api.NewCveConfig(dbPath, config.Log)
 
 		c := api.NewController(config)
 		dir, err := ioutil.TempDir("", "oci-repo-test")
@@ -537,7 +558,6 @@ func TestTLSMutualAndBasicAuth(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -557,7 +577,7 @@ func TestTLSMutualAndBasicAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.DB.Close()
+			_ = api.Close(config.Extension.Search.Cve)
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -626,6 +646,8 @@ func TestTLSMutualAndBasicAuthAllowReadAccess(t *testing.T) {
 			CACert: CACert,
 		}
 		config.HTTP.AllowReadAccess = true
+		config.Extension.Search.DBPath = dbPath
+		config.Extension.Search.Cve = api.NewCveConfig(dbPath, config.Log)
 
 		c := api.NewController(config)
 		dir, err := ioutil.TempDir("", "oci-repo-test")
@@ -634,7 +656,6 @@ func TestTLSMutualAndBasicAuthAllowReadAccess(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -654,7 +675,7 @@ func TestTLSMutualAndBasicAuthAllowReadAccess(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.DB.Close()
+			_ = api.Close(config.Extension.Search.Cve)
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -798,6 +819,9 @@ func TestBasicAuthWithLDAP(t *testing.T) {
 				UserAttribute: "uid",
 			},
 		}
+		config.Extension.Search.DBPath = dbPath
+		config.Extension.Search.Cve = api.NewCveConfig(dbPath, config.Log)
+
 		c := api.NewController(config)
 		dir, err := ioutil.TempDir("", "oci-repo-test")
 		if err != nil {
@@ -805,7 +829,6 @@ func TestBasicAuthWithLDAP(t *testing.T) {
 		}
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -825,7 +848,7 @@ func TestBasicAuthWithLDAP(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.DB.Close()
+			_ = api.Close(config.Extension.Search.Cve)
 		}()
 
 		// without creds, should get access error
@@ -866,12 +889,14 @@ func TestBearerAuth(t *testing.T) {
 				Service: u.Host,
 			},
 		}
+		config.Extension.Search.DBPath = dbPath
+		config.Extension.Search.Cve = api.NewCveConfig(dbPath, config.Log)
+
 		c := api.NewController(config)
 		dir, err := ioutil.TempDir("", "oci-repo-test")
 		So(err, ShouldBeNil)
 		defer os.RemoveAll(dir)
 		c.Config.Storage.RootDirectory = dir
-		c.DBPath = DBPath
 		go func() {
 			// this blocks
 			if err := c.Run(); err != nil {
@@ -891,7 +916,7 @@ func TestBearerAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			c.DB.Close()
+			_ = api.Close(config.Extension.Search.Cve)
 		}()
 
 		blob := []byte("hello, blob!")

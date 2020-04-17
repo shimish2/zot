@@ -2,9 +2,11 @@ package api
 
 import (
 	"github.com/anuvu/zot/errors"
+	cveinfo "github.com/anuvu/zot/pkg/extensions/search/utils"
 	"github.com/anuvu/zot/pkg/log"
 	"github.com/getlantern/deepcopy"
 	dspec "github.com/opencontainers/distribution-spec"
+	"go.etcd.io/bbolt"
 )
 
 //nolint (gochecknoglobals)
@@ -67,21 +69,41 @@ type LogConfig struct {
 	Output string
 }
 
+type ExtensionConfig struct {
+	Search SearchConfig
+}
+
+type SearchConfig struct {
+	Cve    *CveConfig
+	DBPath string
+}
+
+type CveConfig struct {
+	cvedb *bbolt.DB
+}
+
 type Config struct {
-	Version string
-	Commit  string
-	Storage StorageConfig
-	HTTP    HTTPConfig
-	Log     *LogConfig
+	Version   string
+	Commit    string
+	Storage   StorageConfig
+	HTTP      HTTPConfig
+	Log       *LogConfig
+	Extension *ExtensionConfig
+}
+
+func NewCveConfig(dbPath string, logconfig *LogConfig) *CveConfig {
+	cveinfo := &cveinfo.CveInfo{Log: log.NewLogger(logconfig.Level, logconfig.Output)}
+	return &CveConfig{cvedb: cveinfo.InitSearch(dbPath)}
 }
 
 func NewConfig() *Config {
 	return &Config{
-		Version: dspec.Version,
-		Commit:  Commit,
-		Storage: StorageConfig{GC: true, Dedupe: true},
-		HTTP:    HTTPConfig{Address: "127.0.0.1", Port: "8080"},
-		Log:     &LogConfig{Level: "debug"},
+		Version:   dspec.Version,
+		Commit:    Commit,
+		Storage:   StorageConfig{GC: true, Dedupe: true},
+		HTTP:      HTTPConfig{Address: "127.0.0.1", Port: "8080"},
+		Log:       &LogConfig{Level: "debug"},
+		Extension: &ExtensionConfig{SearchConfig{DBPath: ""}},
 	}
 }
 
@@ -118,4 +140,10 @@ func (c *Config) Validate(log log.Logger) error {
 	}
 
 	return nil
+}
+
+func Close(cveconfig *CveConfig) error {
+	err := cveconfig.cvedb.Close()
+
+	return err
 }
