@@ -70,40 +70,48 @@ type LogConfig struct {
 }
 
 type ExtensionConfig struct {
-	Search SearchConfig
+	Search *SearchConfig
 }
 
 type SearchConfig struct {
-	Cve    *CveConfig
-	DBPath string
+	// CVE search
+	CVE *CVEConfig
 }
 
-type CveConfig struct {
-	cvedb *bbolt.DB
+type CVEConfig struct {
+	DataSource      string // can be a 'file://' or 'https://'
+	PeriodicUpdates bool
 }
 
 type Config struct {
-	Version   string
-	Commit    string
-	Storage   StorageConfig
-	HTTP      HTTPConfig
-	Log       *LogConfig
-	Extension *ExtensionConfig
+	Version    string
+	Commit     string
+	Storage    StorageConfig
+	HTTP       HTTPConfig
+	Log        *LogConfig
+	Extensions *ExtensionConfig
 }
 
-func NewCveConfig(dbPath string, logconfig *LogConfig) *CveConfig {
-	cveinfo := &cveinfo.CveInfo{Log: log.NewLogger(logconfig.Level, logconfig.Output)}
-	return &CveConfig{cvedb: cveinfo.InitSearch(dbPath)}
+/* FIXME:
+
+This file is **strictly** user facing config
+
+Move this to pkg/extensions/search/cve/ or remove it
+
+func NewCVEConfig(dbPath string, logconfig *LogConfig) *CVEConfig {
+	cveinfo := &cveinfo.CVEInfo{Log: log.NewLogger(logconfig.Level, logconfig.Output)}
+	return &CVEConfig{cvedb: cveinfo.InitSearch(dbPath)}
 }
+*/
 
 func NewConfig() *Config {
 	return &Config{
-		Version:   dspec.Version,
-		Commit:    Commit,
-		Storage:   StorageConfig{GC: true, Dedupe: true},
-		HTTP:      HTTPConfig{Address: "127.0.0.1", Port: "8080"},
-		Log:       &LogConfig{Level: "debug"},
-		Extension: &ExtensionConfig{SearchConfig{DBPath: ""}},
+		Version:    dspec.Version,
+		Commit:     Commit,
+		Storage:    StorageConfig{GC: true, Dedupe: true},
+		HTTP:       HTTPConfig{Address: "127.0.0.1", Port: "8080"},
+		Log:        &LogConfig{Level: "debug"},
+		Extensions: &ExtensionConfig{&SearchConfig{CVE: &CVEConfig{PeriodicUpdates: true}}},
 	}
 }
 
@@ -142,8 +150,10 @@ func (c *Config) Validate(log log.Logger) error {
 	return nil
 }
 
-func Close(cveconfig *CveConfig) error {
+/* FIXME: Move this to pkg/extensions/search/cve/ or remove it
+func Close(cveconfig *CVEConfig) error {
 	err := cveconfig.cvedb.Close()
 
 	return err
 }
+*/

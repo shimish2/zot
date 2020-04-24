@@ -111,9 +111,10 @@ func (rh *RouteHandler) SetupRoutes() {
 	// swagger docs "/swagger/v2/index.html"
 	rh.c.Router.PathPrefix("/swagger/v2/").Methods("GET").Handler(httpSwagger.WrapHandler)
 	// Zot Search Extension Router
-	resConfig := search.GetResolverConfig(rh.c.Config.Extension.Search.Cve.cvedb, rh.c.Log)
+	resConfig := search.GetResolverConfig(rh.c.Log)
 	searchServer := gqlHandler.NewDefaultServer(search.NewExecutableSchema(resConfig))
-	rh.c.Router.PathPrefix("/v2/query").Methods("GET", "POST").Handler(searchServer)
+	// g.PathPrefix("/query").Methods("GET", "POST").Handler(searchServer)
+	g.PathPrefix("/query").Methods("GET", "POST").Handler(searchHandler(rh.c.log)) // FIXME: <- this is better
 }
 
 // Method handlers

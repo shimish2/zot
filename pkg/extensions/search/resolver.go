@@ -28,7 +28,9 @@ func (r *queryResolver) Repositories(ctx context.Context, name *string) ([]*Repo
 	return []*Repository{}, nil
 }
 
-func GetResolverConfig(db *bbolt.DB, log log.Logger) Config {
+func GetResolverConfig(log log.Logger) Config {
+	// FIXME: open and populate the DB info here, only pass the logger in
+	db := boltdb.Open()
 	return Config{Resolvers: &Resolver{DB: db, Cve: &cveinfo.CveInfo{Log: log}}}
 }
 func (r *queryResolver) CveIDSearch(ctx context.Context, text string) (*CVEIdResult, error) {
