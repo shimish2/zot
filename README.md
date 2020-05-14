@@ -16,6 +16,13 @@
   * Automatic garbage collection of orphaned blobs
   * Layer deduplication using hard links when content is identical
 * Swagger based documentation
+* Search CVE Vulnerabilities via :
+  * Image Repo
+  * Image Repo and Tag
+  * CVEId
+  * Package Vendor
+  * Package Name
+  * Package Name+Version
 * Released under Apache 2.0 License
 * ```go get -u github.com/anuvu/zot/cmd/zot```
 
@@ -29,6 +36,52 @@
 ```
 go get -u github.com/anuvu/zot/cmd/zot
 ```
+
+# Extensions 
+
+## Search Vulnerabilities 
+
+ Let's suppose our zot server is listening on localhost:8080, following are some examples of search query :
+  * Query for list of CVE given image
+
+  ```
+  curl -X POST -H "Content-Type: application/json" --data '{ "query": "{ CVEListForImage (repo:\"zot-test\" ) { tag CVEIdList { name } } }" }' http://localhost:8080/query
+
+  ```
+
+  * Query for list of CVE given image and tag
+  ```
+  curl -X POST -H "Content-Type: application/json" --data '{ "query": "{ CVEListForImageTag (repo:\"zot-test\",tag:\"1.0.0\" ) { name } }" }' http://localhost:8080/query
+
+  ```
+
+  * Query for list of images vulnerable to given CVE
+
+  ```
+  curl -X POST -H "Content-Type: application/json" --data '{ "query": "{ ImageListForCVE (text:\"CVE-2002-1119\") { name tags } }" }' http://localhost:8080/query
+
+  ```
+
+  * Query for CVE details given CVE ID
+  ``` 
+  curl -X POST -H "Content-Type: application/json" --data '{ "query": "{ CVE (text:\"CVE-1999-0002\") { name VulDesc VulDetails { PkgName PkgVendor PkgVersion } } }" }' http://localhost:8080/query
+
+  ```
+  * Query for list of CVE given package vendor
+  ```
+  curl -X POST -H "Content-Type: application/json" --data '{ "query": "{ CVEListForPkgVendor (text:\"freebsd\") { name} }" }' http://localhost:8080/query 
+  ```
+  * Query for list of CVE given package name
+  ``` 
+  curl -X POST -H "Content-Type: application/json" --data '{ "query": "{ CVEListForPkgName (text:\"freebsd\") { name} }" }' http://localhost:8080/query
+
+  ```
+
+  * Query for list of CVE given package name and version
+  ```
+  curl -X POST -H "Content-Type: application/json" --data '{ "query": "{ CVEListForPkgNameVer (text:\"openlinux1.2\") { name} }" }' http://localhost:8080/query
+
+  ```
 
 # Full CI/CD Build
 
