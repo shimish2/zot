@@ -19,8 +19,6 @@ import (
 
 	"github.com/anuvu/zot/errors"
 	"github.com/anuvu/zot/pkg/api"
-	"github.com/anuvu/zot/pkg/extensions/search"
-	cveinfo "github.com/anuvu/zot/pkg/extensions/search/cve"
 	"github.com/chartmuseum/auth"
 	"github.com/mitchellh/mapstructure"
 	vldap "github.com/nmcclain/ldap"
@@ -121,7 +119,6 @@ func TestBasicAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			_ = cveinfo.Close(search.ResConfig.DB)
 		}()
 
 		// without creds, should get access error
@@ -202,7 +199,6 @@ func TestTLSWithBasicAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			_ = cveinfo.Close(search.ResConfig.DB)
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -282,7 +278,6 @@ func TestTLSWithBasicAuthAllowReadAccess(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			_ = cveinfo.Close(search.ResConfig.DB)
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -356,7 +351,6 @@ func TestTLSMutualAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			_ = cveinfo.Close(search.ResConfig.DB)
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -443,7 +437,6 @@ func TestTLSMutualAuthAllowReadAccess(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			_ = cveinfo.Close(search.ResConfig.DB)
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -543,7 +536,6 @@ func TestTLSMutualAndBasicAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			_ = cveinfo.Close(search.ResConfig.DB)
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -640,7 +632,6 @@ func TestTLSMutualAndBasicAuthAllowReadAccess(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			_ = cveinfo.Close(search.ResConfig.DB)
 		}()
 
 		// accessing insecure HTTP site should fail
@@ -812,7 +803,6 @@ func TestBasicAuthWithLDAP(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			_ = cveinfo.Close(search.ResConfig.DB)
 		}()
 
 		// without creds, should get access error
@@ -879,7 +869,6 @@ func TestBearerAuth(t *testing.T) {
 		defer func() {
 			ctx := context.Background()
 			_ = c.Server.Shutdown(ctx)
-			_ = cveinfo.Close(search.ResConfig.DB)
 		}()
 
 		blob := []byte("hello, blob!")
