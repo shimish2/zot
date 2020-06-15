@@ -43,7 +43,9 @@ type ComplexityRoot struct {
 	Cve struct {
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
+		PackageList func(childComplexity int) int
 		Severity    func(childComplexity int) int
+		Title       func(childComplexity int) int
 	}
 
 	CVEResultForImage struct {
@@ -56,6 +58,12 @@ type ComplexityRoot struct {
 		Tags func(childComplexity int) int
 	}
 
+	PackageInfo struct {
+		FixedVersion     func(childComplexity int) int
+		InstalledVersion func(childComplexity int) int
+		Name             func(childComplexity int) int
+	}
+
 	Query struct {
 		CVEListForImage func(childComplexity int, image string) int
 		ImageListForCve func(childComplexity int, id string) int
@@ -63,7 +71,7 @@ type ComplexityRoot struct {
 }
 
 type QueryResolver interface {
-	CVEListForImage(ctx context.Context, image string) ([]*CVEResultForImage, error)
+	CVEListForImage(ctx context.Context, image string) (*CVEResultForImage, error)
 	ImageListForCve(ctx context.Context, id string) ([]*ImgResultForCve, error)
 }
 
@@ -96,12 +104,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Cve.ID(childComplexity), true
 
+	case "CVE.PackageList":
+		if e.complexity.Cve.PackageList == nil {
+			break
+		}
+
+		return e.complexity.Cve.PackageList(childComplexity), true
+
 	case "CVE.Severity":
 		if e.complexity.Cve.Severity == nil {
 			break
 		}
 
 		return e.complexity.Cve.Severity(childComplexity), true
+
+	case "CVE.Title":
+		if e.complexity.Cve.Title == nil {
+			break
+		}
+
+		return e.complexity.Cve.Title(childComplexity), true
 
 	case "CVEResultForImage.CVEList":
 		if e.complexity.CVEResultForImage.CVEList == nil {
@@ -130,6 +152,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ImgResultForCve.Tags(childComplexity), true
+
+	case "PackageInfo.FixedVersion":
+		if e.complexity.PackageInfo.FixedVersion == nil {
+			break
+		}
+
+		return e.complexity.PackageInfo.FixedVersion(childComplexity), true
+
+	case "PackageInfo.InstalledVersion":
+		if e.complexity.PackageInfo.InstalledVersion == nil {
+			break
+		}
+
+		return e.complexity.PackageInfo.InstalledVersion(childComplexity), true
+
+	case "PackageInfo.Name":
+		if e.complexity.PackageInfo.Name == nil {
+			break
+		}
+
+		return e.complexity.PackageInfo.Name(childComplexity), true
 
 	case "Query.CVEListForImage":
 		if e.complexity.Query.CVEListForImage == nil {
@@ -212,8 +255,16 @@ var sources = []*ast.Source{
 
 type CVE {
      Id: String 
+     Title: String
      Description: String
      Severity: String
+     PackageList: [PackageInfo]
+}
+
+type PackageInfo {
+     Name: String 
+     InstalledVersion: String 
+     FixedVersion: String 
 }
 
 type ImgResultForCVE {
@@ -222,7 +273,7 @@ type ImgResultForCVE {
 }
 
 type Query {
-  CVEListForImage(image: String!) :[CVEResultForImage] 
+  CVEListForImage(image: String!) :CVEResultForImage 
   ImageListForCVE(id: String!) :[ImgResultForCVE]
 }`, BuiltIn: false},
 }
@@ -341,6 +392,37 @@ func (ec *executionContext) _CVE_Id(ctx context.Context, field graphql.Collected
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _CVE_Title(ctx context.Context, field graphql.CollectedField, obj *Cve) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "CVE",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _CVE_Description(ctx context.Context, field graphql.CollectedField, obj *Cve) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -401,6 +483,37 @@ func (ec *executionContext) _CVE_Severity(ctx context.Context, field graphql.Col
 	res := resTmp.(*string)
 	fc.Result = res
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CVE_PackageList(ctx context.Context, field graphql.CollectedField, obj *Cve) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "CVE",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PackageList, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*PackageInfo)
+	fc.Result = res
+	return ec.marshalOPackageInfo2ᚕᚖgithubᚗcomᚋanuvuᚋzotᚋpkgᚋextensionsᚋsearchᚐPackageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CVEResultForImage_Tag(ctx context.Context, field graphql.CollectedField, obj *CVEResultForImage) (ret graphql.Marshaler) {
@@ -527,6 +640,99 @@ func (ec *executionContext) _ImgResultForCVE_Tags(ctx context.Context, field gra
 	return ec.marshalOString2ᚕᚖstring(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _PackageInfo_Name(ctx context.Context, field graphql.CollectedField, obj *PackageInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "PackageInfo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PackageInfo_InstalledVersion(ctx context.Context, field graphql.CollectedField, obj *PackageInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "PackageInfo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InstalledVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PackageInfo_FixedVersion(ctx context.Context, field graphql.CollectedField, obj *PackageInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "PackageInfo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FixedVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_CVEListForImage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -560,9 +766,9 @@ func (ec *executionContext) _Query_CVEListForImage(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*CVEResultForImage)
+	res := resTmp.(*CVEResultForImage)
 	fc.Result = res
-	return ec.marshalOCVEResultForImage2ᚕᚖgithubᚗcomᚋanuvuᚋzotᚋpkgᚋextensionsᚋsearchᚐCVEResultForImage(ctx, field.Selections, res)
+	return ec.marshalOCVEResultForImage2ᚖgithubᚗcomᚋanuvuᚋzotᚋpkgᚋextensionsᚋsearchᚐCVEResultForImage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_ImageListForCVE(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1748,10 +1954,14 @@ func (ec *executionContext) _CVE(ctx context.Context, sel ast.SelectionSet, obj 
 			out.Values[i] = graphql.MarshalString("CVE")
 		case "Id":
 			out.Values[i] = ec._CVE_Id(ctx, field, obj)
+		case "Title":
+			out.Values[i] = ec._CVE_Title(ctx, field, obj)
 		case "Description":
 			out.Values[i] = ec._CVE_Description(ctx, field, obj)
 		case "Severity":
 			out.Values[i] = ec._CVE_Severity(ctx, field, obj)
+		case "PackageList":
+			out.Values[i] = ec._CVE_PackageList(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -1804,6 +2014,34 @@ func (ec *executionContext) _ImgResultForCVE(ctx context.Context, sel ast.Select
 			out.Values[i] = ec._ImgResultForCVE_Name(ctx, field, obj)
 		case "Tags":
 			out.Values[i] = ec._ImgResultForCVE_Tags(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var packageInfoImplementors = []string{"PackageInfo"}
+
+func (ec *executionContext) _PackageInfo(ctx context.Context, sel ast.SelectionSet, obj *PackageInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, packageInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PackageInfo")
+		case "Name":
+			out.Values[i] = ec._PackageInfo_Name(ctx, field, obj)
+		case "InstalledVersion":
+			out.Values[i] = ec._PackageInfo_InstalledVersion(ctx, field, obj)
+		case "FixedVersion":
+			out.Values[i] = ec._PackageInfo_FixedVersion(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2444,46 +2682,6 @@ func (ec *executionContext) marshalOCVEResultForImage2githubᚗcomᚋanuvuᚋzot
 	return ec._CVEResultForImage(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOCVEResultForImage2ᚕᚖgithubᚗcomᚋanuvuᚋzotᚋpkgᚋextensionsᚋsearchᚐCVEResultForImage(ctx context.Context, sel ast.SelectionSet, v []*CVEResultForImage) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOCVEResultForImage2ᚖgithubᚗcomᚋanuvuᚋzotᚋpkgᚋextensionsᚋsearchᚐCVEResultForImage(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
-}
-
 func (ec *executionContext) marshalOCVEResultForImage2ᚖgithubᚗcomᚋanuvuᚋzotᚋpkgᚋextensionsᚋsearchᚐCVEResultForImage(ctx context.Context, sel ast.SelectionSet, v *CVEResultForImage) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -2540,6 +2738,57 @@ func (ec *executionContext) marshalOImgResultForCVE2ᚖgithubᚗcomᚋanuvuᚋzo
 		return graphql.Null
 	}
 	return ec._ImgResultForCVE(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOPackageInfo2githubᚗcomᚋanuvuᚋzotᚋpkgᚋextensionsᚋsearchᚐPackageInfo(ctx context.Context, sel ast.SelectionSet, v PackageInfo) graphql.Marshaler {
+	return ec._PackageInfo(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOPackageInfo2ᚕᚖgithubᚗcomᚋanuvuᚋzotᚋpkgᚋextensionsᚋsearchᚐPackageInfo(ctx context.Context, sel ast.SelectionSet, v []*PackageInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOPackageInfo2ᚖgithubᚗcomᚋanuvuᚋzotᚋpkgᚋextensionsᚋsearchᚐPackageInfo(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalOPackageInfo2ᚖgithubᚗcomᚋanuvuᚋzotᚋpkgᚋextensionsᚋsearchᚐPackageInfo(ctx context.Context, sel ast.SelectionSet, v *PackageInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PackageInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

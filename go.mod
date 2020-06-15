@@ -53,6 +53,7 @@ require (
 	go.uber.org/multierr v1.4.0 // indirect
 	go.uber.org/zap v1.13.0 // indirect
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
+	golang.org/x/tools/gopls v0.4.1 // indirect
 	gopkg.in/resty.v1 v1.12.0
 )
 

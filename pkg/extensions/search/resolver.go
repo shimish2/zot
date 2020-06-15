@@ -31,6 +31,13 @@ func (r *Resolver) Query() QueryResolver {
 
 type queryResolver struct{ *Resolver }
 
+type cveDetail struct {
+	Title       string
+	Description string
+	Severity    string
+	PackageList []*PackageInfo
+}
+
 // GetResolverConfig ...
 func GetResolverConfig(dir string, log log.Logger, imgstorage *storage.ImageStore) Config {
 	config, err := cveinfo.NewTrivyConfig(dir)
@@ -45,16 +52,14 @@ func GetResolverConfig(dir string, log log.Logger, imgstorage *storage.ImageStor
 	return Config{Resolvers: ResConfig}
 }
 
-func (r *queryResolver) CVEListForImage(ctx context.Context, image string) ([]*CVEResultForImage, error) {
-	imgResult := []*CVEResultForImage{}
-
+func (r *queryResolver) CVEListForImage(ctx context.Context, image string) (*CVEResultForImage, error) {
 	r.cveInfo.CveTrivyConfig.TrivyConfig.Input = path.Join(r.dir, image)
 
 	r.cveInfo.Log.Info().Str("Scanning Image", image).Msg("")
 
 	results, err := cveinfo.ScanImage(r.cveInfo.CveTrivyConfig)
 	if err != nil {
-		return imgResult, err
+		return &CVEResultForImage{}, err
 	}
 
 	var copyImgTag string
@@ -63,23 +68,60 @@ func (r *queryResolver) CVEListForImage(ctx context.Context, image string) ([]*C
 		copyImgTag = strings.Split(image, ":")[1]
 	}
 
+	cveidMap := make(map[string]cveDetail)
+
 	for _, result := range results {
-		cveids := []*Cve{}
-
 		for _, vulnerability := range result.Vulnerabilities {
-			id := vulnerability.VulnerabilityID
+			pkgName := vulnerability.PkgName
 
-			desc := vulnerability.Description
+			installedVersion := vulnerability.InstalledVersion
 
-			severity := vulnerability.Severity
+			var fixedVersion string
+			if vulnerability.FixedVersion != "" {
+				fixedVersion = vulnerability.FixedVersion
+			} else {
+				fixedVersion = "Not Specified"
+			}
 
-			cveids = append(cveids, &Cve{ID: &id, Description: &desc, Severity: &severity})
+			_, ok := cveidMap[vulnerability.VulnerabilityID]
+			if ok {
+				cveDetailStruct := cveidMap[vulnerability.VulnerabilityID]
+
+				pkgList := cveDetailStruct.PackageList
+
+				pkgList = append(pkgList, &PackageInfo{Name: &pkgName, InstalledVersion: &installedVersion, FixedVersion: &fixedVersion})
+
+				cveDetailStruct.PackageList = pkgList
+
+				cveidMap[vulnerability.VulnerabilityID] = cveDetailStruct
+
+			} else {
+				newPkgList := make([]*PackageInfo, 0)
+
+				newPkgList = append(newPkgList, &PackageInfo{Name: &pkgName, InstalledVersion: &installedVersion, FixedVersion: &fixedVersion})
+
+				cveidMap[vulnerability.VulnerabilityID] = cveDetail{Title: vulnerability.Title, Description: vulnerability.Description, Severity: vulnerability.Severity, PackageList: newPkgList}
+			}
 		}
-
-		imgResult = append(imgResult, &CVEResultForImage{Tag: &copyImgTag, CVEList: cveids})
 	}
 
-	return imgResult, nil
+	cveids := []*Cve{}
+
+	for id, cveDetail := range cveidMap {
+		vulId := id
+
+		desc := cveDetail.Description
+
+		title := cveDetail.Title
+
+		severity := cveDetail.Severity
+
+		pkgList := cveDetail.PackageList
+
+		cveids = append(cveids, &Cve{ID: &vulId, Title: &title, Description: &desc, Severity: &severity, PackageList: pkgList})
+	}
+
+	return &CVEResultForImage{Tag: &copyImgTag, CVEList: cveids}, nil
 }
 
 func (r *queryResolver) ImageListForCve(ctx context.Context, id string) ([]*ImgResultForCve, error) {
