@@ -10,6 +10,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -217,6 +220,11 @@ func (is *ImageStore) ValidateRepo(name string) (bool, error) {
 func (is *ImageStore) GetRepositories() ([]string, error) {
 	dir := is.rootDir
 
+	is.log.Debug().Msg("acquiring read lock to read all repositories")
+
+	is.RLock()
+	defer is.RUnlock()
+
 	_, err := ioutil.ReadDir(dir)
 	if err != nil {
 		is.log.Error().Err(err).Msg("failure walking storage root-dir")
@@ -248,6 +256,8 @@ func (is *ImageStore) GetRepositories() ([]string, error) {
 		return nil
 	})
 
+	is.log.Debug().Msg("release read lock acquire to read all repositories")
+
 	return stores, err
 }
 
@@ -258,7 +268,7 @@ func (is *ImageStore) GetImageTags(repo string) ([]string, error) {
 		return nil, errors.ErrRepoNotFound
 	}
 
-	is.log.Debug().Msg("Acquiring read lock for reading image tags")
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Acquiring read lock for reading image tags")
 
 	is.RLock()
 	defer is.RUnlock()
@@ -296,7 +306,7 @@ func (is *ImageStore) GetImageManifest(repo string, reference string) ([]byte, s
 		return nil, "", "", errors.ErrRepoNotFound
 	}
 
-	is.log.Debug().Msg("Acquiring read lock for reading image manifests")
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Acquiring read lock for reading image manifests")
 
 	is.RLock()
 	defer is.RUnlock()
@@ -368,7 +378,7 @@ func (is *ImageStore) GetImageManifest(repo string, reference string) ([]byte, s
 		return nil, "", "", err
 	}
 
-	is.log.Debug().Msg("Releasing read lock that is acquired for reading image manifest")
+	is.log.Debug().Str("image", repo).Msg("Releasing read lock that is acquired for reading image manifest")
 
 	return buf, digest.String(), mediaType, nil
 }
@@ -376,7 +386,7 @@ func (is *ImageStore) GetImageManifest(repo string, reference string) ([]byte, s
 // PutImageManifest adds an image manifest to the repository.
 func (is *ImageStore) PutImageManifest(repo string, reference string, mediaType string,
 	body []byte) (string, error) {
-	is.log.Debug().Msg("Acquiring lock for putting image manifest")
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Acquiring lock for putting image manifest")
 
 	is.Lock()
 	defer is.Unlock()
@@ -534,7 +544,7 @@ func (is *ImageStore) PutImageManifest(repo string, reference string, mediaType 
 		}
 	}
 
-	is.log.Debug().Msg("Release write lock that is acquired for putting image manifest")
+	is.log.Debug().Str("image", repo).Msg("Release write lock that is acquired for putting image manifest")
 
 	return desc.Digest.String(), nil
 }
@@ -546,7 +556,7 @@ func (is *ImageStore) DeleteImageManifest(repo string, reference string) error {
 		return errors.ErrRepoNotFound
 	}
 
-	is.log.Debug().Msg("Acquiring write lock for deleting image manifest")
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Acquiring write lock for deleting image manifest")
 
 	is.Lock()
 	defer is.Unlock()
@@ -621,7 +631,7 @@ func (is *ImageStore) DeleteImageManifest(repo string, reference string) error {
 
 	_ = os.Remove(p)
 
-	is.log.Debug().Msg("Releasing write lock for deleting image manifests")
+	is.log.Debug().Str("image", repo).Msg("Releasing write lock for deleting image manifests")
 
 	return nil
 }
@@ -636,13 +646,18 @@ func (is *ImageStore) BlobUploadPath(repo string, uuid string) string {
 
 // NewBlobUpload returns the unique ID for an upload in progress.
 func (is *ImageStore) NewBlobUpload(repo string) (string, error) {
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Acquiring write lock at new blob upload")
 	is.Lock()
 
 	if err := is.InitRepo(repo); err != nil {
+		is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Error initializing repo, releasing acquired write lock at new blob upload")
+		is.Unlock()
 		return "", err
 	}
 
 	is.Unlock()
+
+	is.log.Debug().Str("image", repo).Msg("Releasing write lock acquired at new blob upload")
 
 	uuid, err := guuid.NewV4()
 	if err != nil {
@@ -680,16 +695,18 @@ func (is *ImageStore) GetBlobUpload(repo string, uuid string) (int64, error) {
 // PutBlobChunkStreamed appends another chunk of data to the specified blob. It returns
 // the number of actual bytes to the blob.
 func (is *ImageStore) PutBlobChunkStreamed(repo string, uuid string, body io.Reader) (int64, error) {
-	is.log.Debug().Msg("Acquiring write lock on init repo while running put blob chunk streamed method")
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Acquiring write lock on init repo while running put blob chunk streamed method")
 	is.Lock()
 
 	if err := is.InitRepo(repo); err != nil {
+		is.log.Debug().Str("image", repo).Msg("Error initializing repo, releasing acquired write lock at put blob chunk streamed upload")
+		is.Unlock()
 		return -1, err
 	}
 
 	is.Unlock()
 
-	is.log.Debug().Msg("Releasing write lock on init repo while running put blob chunk streamed method")
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Releasing write lock on init repo while running put blob chunk streamed method")
 
 	blobUploadPath := is.BlobUploadPath(repo, uuid)
 
@@ -712,7 +729,14 @@ func (is *ImageStore) PutBlobChunkStreamed(repo string, uuid string, body io.Rea
 		is.log.Fatal().Err(err).Msg("failed to seek file")
 	}
 
+	goroutineID := goid()
+
+	is.log.Debug().Str("image", repo).Int("Goroutine id for put blob chunk streamed method", goroutineID).Msg("")
+
 	n, err := io.Copy(file, body)
+	if err != nil {
+		is.log.Error().Err(err).Str("image", repo).Int("goroutine id", goid()).Str("file", blobUploadPath).Msg("put blob chunk streamed method")
+	}
 
 	return n, err
 }
@@ -721,16 +745,18 @@ func (is *ImageStore) PutBlobChunkStreamed(repo string, uuid string, body io.Rea
 // the number of actual bytes to the blob.
 func (is *ImageStore) PutBlobChunk(repo string, uuid string, from int64, to int64,
 	body io.Reader) (int64, error) {
-	is.log.Debug().Msg("Acquiring write lock for putting blob chunk method")
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Acquiring write lock for putting blob chunk method")
 	is.Lock()
 
 	if err := is.InitRepo(repo); err != nil {
+		is.log.Debug().Str("image", repo).Msg("Error initializing repo, releasing acquired write lock at put blob chunk upload")
+		is.Unlock()
 		return -1, err
 	}
 
 	is.Unlock()
 
-	is.log.Debug().Msg("Releasing write lock for putting blob chunk method")
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Releasing write lock for putting blob chunk method")
 
 	blobUploadPath := is.BlobUploadPath(repo, uuid)
 
@@ -759,7 +785,14 @@ func (is *ImageStore) PutBlobChunk(repo string, uuid string, from int64, to int6
 		is.log.Fatal().Err(err).Msg("failed to seek file")
 	}
 
+	goroutineId := goid()
+
+	is.log.Debug().Str("image", repo).Int("goroutineid for put blob chunk", goroutineId).Msg("")
+
 	n, err := io.Copy(file, body)
+	if err != nil {
+		is.log.Error().Err(err).Str("image", repo).Str("file", blobUploadPath).Msg("put blob chunk streamed method")
+	}
 
 	return n, err
 }
@@ -817,9 +850,10 @@ func (is *ImageStore) FinishBlobUpload(repo string, uuid string, body io.Reader,
 
 	dir := path.Join(is.rootDir, repo, "blobs", dstDigest.Algorithm().String())
 
-	is.log.Debug().Msg("Acquiring write lock for finishing blob upload")
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Acquiring write lock for finishing blob upload")
 
 	is.Lock()
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Acquired write lock for finishing blob upload")
 	defer is.Unlock()
 
 	ensureDir(dir, is.log)
@@ -839,23 +873,25 @@ func (is *ImageStore) FinishBlobUpload(repo string, uuid string, body io.Reader,
 		}
 	}
 
-	is.log.Debug().Msg("Releasing write lock that is acquired for finshing blob upload")
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Releasing write lock that is acquired for finishing blob upload")
 
 	return nil
 }
 
 // FullBlobUpload handles a full blob upload, and no partial session is created.
 func (is *ImageStore) FullBlobUpload(repo string, body io.Reader, digest string) (string, int64, error) {
-	is.log.Debug().Msg("Acquiring write lock for full blob upload")
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Acquiring write lock for full blob upload init repo call")
 	is.Lock()
 
 	if err := is.InitRepo(repo); err != nil {
+		is.log.Debug().Str("image", repo).Msg("Error initializing repo, releasing acquired write lock during full blob upload")
+		is.Unlock()
 		return "", -1, err
 	}
 
 	is.Unlock()
 
-	is.log.Debug().Msg("Release lock for full blob upload")
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Release lock for full blob upload init repo call")
 
 	dstDigest, err := godigest.Parse(digest)
 	if err != nil {
@@ -897,7 +933,9 @@ func (is *ImageStore) FullBlobUpload(repo string, body io.Reader, digest string)
 
 	dir := path.Join(is.rootDir, repo, "blobs", dstDigest.Algorithm().String())
 
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Acquiring write lock for full blob upload")
 	is.Lock()
+	is.log.Debug().Str("image", repo).Int("goroutine id", goid()).Msg("Acquired write lock for full blob upload")
 	defer is.Unlock()
 
 	ensureDir(dir, is.log)
@@ -916,6 +954,8 @@ func (is *ImageStore) FullBlobUpload(repo string, body io.Reader, digest string)
 			return "", -1, err
 		}
 	}
+
+	is.log.Debug().Str("image", repo).Msg("Release write lock for acquiring full blob upload")
 
 	return uuid, n, nil
 }
@@ -1040,7 +1080,7 @@ func (is *ImageStore) GetBlob(repo string, digest string, mediaType string) (io.
 		return nil, -1, errors.ErrBlobNotFound
 	}
 
-	is.log.Debug().Msg("Acquiring read lock for reading blobs")
+	is.log.Debug().Str("image", repo).Msg("Acquiring read lock for reading blobs")
 
 	is.RLock()
 	defer is.RUnlock()
@@ -1051,7 +1091,7 @@ func (is *ImageStore) GetBlob(repo string, digest string, mediaType string) (io.
 		return nil, -1, err
 	}
 
-	is.log.Debug().Msg("Releasing read lock that is acquired for reading blobs")
+	is.log.Debug().Str("image", repo).Msg("Releasing read lock that is acquired for reading blobs")
 
 	return blobReader, blobInfo.Size(), nil
 }
@@ -1079,7 +1119,7 @@ func (is *ImageStore) DeleteBlob(repo string, digest string) error {
 		}
 	}
 
-	is.log.Debug().Msg("Acquiring write lock for deleting image blobs")
+	is.log.Debug().Str("image", repo).Msg("Acquiring write lock for deleting image blobs")
 	is.Lock()
 	defer is.Unlock()
 
@@ -1088,7 +1128,7 @@ func (is *ImageStore) DeleteBlob(repo string, digest string) error {
 		return err
 	}
 
-	is.log.Debug().Msg("Release write lock that is acquired for deleting image blobs")
+	is.log.Debug().Str("image", repo).Msg("Release write lock that is acquired for deleting image blobs")
 
 	return nil
 }
@@ -1139,4 +1179,16 @@ func ifOlderThan(is *ImageStore, repo string, delay time.Duration) casext.GCPoli
 
 		return true, nil
 	}
+}
+
+// Used from https://gist.github.com/metafeather/3615b23097836bc36579100dac376906
+func goid() int {
+	var buf [64]byte
+	n := runtime.Stack(buf[:], false)
+	idField := strings.Fields(strings.TrimPrefix(string(buf[:n]), "goroutine "))[0]
+	id, err := strconv.Atoi(idField)
+	if err != nil {
+		panic(fmt.Sprintf("cannot get goroutine id: %v", err))
+	}
+	return id
 }
