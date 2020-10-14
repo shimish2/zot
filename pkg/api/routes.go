@@ -21,10 +21,8 @@ import (
 	"strconv"
 	"strings"
 
-	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
 	_ "github.com/anuvu/zot/docs" // as required by swaggo
 	"github.com/anuvu/zot/errors"
-	"github.com/anuvu/zot/pkg/extensions/search"
 	"github.com/anuvu/zot/pkg/log"
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
@@ -47,14 +45,7 @@ type RouteHandler struct {
 
 func NewRouteHandler(c *Controller) *RouteHandler {
 	rh := &RouteHandler{c: c}
-	rh.SetupRoutes()
-
 	return rh
-}
-
-func (rh *RouteHandler) searchHandler() *gqlHandler.Server {
-	resConfig := search.GetResolverConfig(rh.c.Config.Storage.RootDirectory, rh.c.Log, rh.c.ImageStore)
-	return gqlHandler.NewDefaultServer(search.NewExecutableSchema(resConfig))
 }
 
 // blobRLockWrapper calls the real handler with read-lock held.
@@ -114,10 +105,6 @@ func (rh *RouteHandler) SetupRoutes() {
 	}
 	// swagger docs "/swagger/v2/index.html"
 	rh.c.Router.PathPrefix("/swagger/v2/").Methods("GET").Handler(httpSwagger.WrapHandler)
-	// Zot Search Extension Router
-	if rh.c.Config != nil && rh.c.Config.Extensions != nil {
-		rh.c.Router.PathPrefix("/query").Methods("GET", "POST").Handler(rh.searchHandler())
-	}
 }
 
 // Method handlers
