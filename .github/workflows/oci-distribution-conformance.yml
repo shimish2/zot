@@ -1,6 +1,6 @@
 # This is a conformance test workflow that is automatically triggered with each PR
 
-name: Conformance workflow
+name: conformance
 
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
@@ -47,10 +47,12 @@ jobs:
         OCI_TEST_CONTENT_DISCOVERY: 1
         OCI_TEST_CONTENT_MANGEMENT: 1
         OCI_HIDE_SKIPPED_WORKFLOWS: 1
+    - run: mkdir -p .out/ && mv {report.html,junit.xml} .out/
+      if: always()
       #run: docker run --rm -v $(pwd)/results:/results -w /results -e OCI_ROOT_URL=${{ env.OCI_ROOT_URL }} -e OCI_NAMESPACE="anuvu/zot" -e OCI_TEST_PULL=1 -e OCI_TEST_PUSH=1 -e OCI_TEST_CONTENT_DISCOVERY=1 -e OCI_TEST_CONTENT_MANAGEMENT=1 -e OCI_HIDE_SKIPPED_WORKFLOWS=0 -e OCI_DEBUG="true" ghcr.io/opencontainers/distribution-spec/conformance:db4cc68
     - name: Upload test results zip as build artifact
       uses: actions/upload-artifact@v1
       with:
         name: oci-test-results-${{ github.sha }}
-        path: result/
-      if: github.event == 'push'
+        path: .out/
+      if: always()
