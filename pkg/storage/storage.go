@@ -16,6 +16,7 @@ import (
 
 	"github.com/anuvu/zot/errors"
 	zlog "github.com/anuvu/zot/pkg/log"
+	"github.com/apex/log"
 	apexlog "github.com/apex/log"
 	guuid "github.com/gofrs/uuid"
 	godigest "github.com/opencontainers/go-digest"
@@ -695,6 +696,8 @@ func (is *ImageStore) NewBlobUpload(repo string) (string, error) {
 
 	file, err := os.OpenFile(blobUploadPath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0600)
 	if err != nil {
+		log.Errorf("error opening file", err)
+		log.Errorf("file path", blobUploadPath)
 		return "", errors.ErrRepoNotFound
 	}
 	defer file.Close()
