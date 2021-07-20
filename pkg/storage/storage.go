@@ -988,7 +988,14 @@ retry:
 			}
 			goto retry
 		}
+
 		dstFi, err := os.Stat(dst)
+		if err == nil {
+			is.log.Debug().Str("blobPath", dst).Msg("dedupe: blob exists")
+
+			return nil
+		}
+
 		if err != nil && !os.IsNotExist(err) {
 			is.log.Error().Err(err).Str("blobPath", dstRecord).Msg("dedupe: unable to stat")
 
