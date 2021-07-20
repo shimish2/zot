@@ -985,7 +985,18 @@ retry:
 			}
 			goto retry
 		}
+
 		dstFi, err := os.Stat(dst)
+		if err == nil {
+			is.log.Debug().Str("blobPath", dst).Msg("dedupe: blob exists")
+			err = os.Remove(src)
+			if err != nil {
+				is.log.Error().Err(err).Str("src", src).Msg("dedupe: unable to remove blob")
+			}
+
+			return err
+		}
+
 		if err != nil && !os.IsNotExist(err) {
 			is.log.Error().Err(err).Str("blobPath", dstRecord).Msg("dedupe: unable to stat")
 
@@ -998,6 +1009,7 @@ retry:
 				return err
 			}
 		}
+
 		if err := os.Remove(src); err != nil {
 			is.log.Error().Err(err).Str("src", src).Msg("dedupe: uname to remove blob")
 			return err
